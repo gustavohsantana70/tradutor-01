@@ -15,18 +15,15 @@ export const translateWithMarianMT = async (text: string, config: TranslationCon
   const glossaryMap = allTerms.map(t => `${t.source} -> ${t.target}`).join('\n');
 
   const prompt = `
-    *** ENGINE SWITCHED: MARIAN-MT SIMULATION ***
-    Target Model: Helsinki-NLP/opus-mt-pt-en
-    Behavior: Strict, Rigid, Glossary-Enforced.
-
-    TASK: Translate strictly.
-    SOURCE: ${config.sourceLang}
-    TARGET: ${config.targetLang}
+    *** ENGINE SWITCHED: MARIAN-MT (Helsinki-NLP/opus-mt-pt-en) ***
+    Target Behavior: Rigid Neural Machine Translation (NMT).
     
-    CRITICAL INSTRUCTIONS:
-    1. USE THE GLOSSARY BELOW ABSOLUTELY.
-    2. PRESERVE ALL TAGS (H1, TAB, FOOTNOTE) EXACTLY.
-    3. DO NOT IMPROVE STYLE. BE LITERAL AND ACCURATE.
+    TASK: Translate strictly from ${config.sourceLang} to ${config.targetLang}.
+    
+    CRITICAL NMT RULES:
+    1. STRICT GLOSSARY ENFORCEMENT: You MUST use the provided glossary terms below. No synonyms.
+    2. PRESERVE TAGS EXACTLY: All XML tags (<H1>, <TAB>, <FOOTNOTE>) must remain in the output exactly as they are in the input.
+    3. LITERAL STYLE: Do not attempt to be "creative" or "natural" if it sacrifices accuracy. Be dry and precise, typical of standard NMT output for legal texts.
     
     GLOSSARY:
     ${glossaryMap}

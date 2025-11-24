@@ -1,14 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import Translator from './components/Translator';
 import Chatbot from './components/Chatbot';
 import Login from './components/Login';
 import DeveloperConsole from './components/DeveloperConsole';
-import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, AuthUser, TranslationEngine } from './types';
+import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, AuthUser, TranslationEngine, UILanguage } from './types';
 import { getCurrentUser, logout } from './services/authService';
 import { BookOpen, ShieldCheck, Globe, Cpu, LogOut, User, Terminal } from 'lucide-react';
+import { LABELS } from './services/localizationService';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [uiLang, setUiLang] = useState<UILanguage>('pt'); // Default to Portuguese
   const [isDevConsoleOpen, setIsDevConsoleOpen] = useState(false);
   const [config, setConfig] = useState<TranslationConfig>({
     sourceLang: 'pt-BR',
@@ -23,6 +26,8 @@ const App: React.FC = () => {
     customTerms: []
   });
 
+  const t = LABELS[uiLang];
+
   useEffect(() => {
     const currentUser = getCurrentUser();
     if (currentUser) {
@@ -35,8 +40,12 @@ const App: React.FC = () => {
     setUser(null);
   };
 
+  const toggleLanguage = () => {
+    setUiLang(prev => prev === 'en' ? 'pt' : 'en');
+  };
+
   if (!user) {
-    return <Login onLogin={setUser} />;
+    return <Login onLogin={setUser} uiLang={uiLang} setUiLang={setUiLang} />;
   }
 
   return (
@@ -51,22 +60,30 @@ const App: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">LexiGen <span className="text-indigo-400 font-light">Translator</span></h1>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">AI Powered Legal Localization</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{t.appSubtitle}</p>
           </div>
         </div>
 
         <div className="hidden md:flex items-center gap-6 text-sm text-slate-300">
+           
+           {/* Language Switcher */}
+           <button 
+             onClick={toggleLanguage}
+             className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded transition-colors"
+             title="Switch UI Language"
+           >
+             <span className="text-lg leading-none">{uiLang === 'pt' ? '🇧🇷' : '🇺🇸'}</span>
+             <span className="text-xs font-bold">{uiLang.toUpperCase()}</span>
+           </button>
+
            <div className="flex items-center gap-2">
               <Globe size={14} />
               <span>{config.sourceLang} &rarr; {config.targetLang}</span>
            </div>
-           <div className="flex items-center gap-2">
-              <ShieldCheck size={14} />
-              <span>{config.jurisdiction}</span>
-           </div>
+           
            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-xs font-mono text-indigo-300 border border-slate-700">
              <Cpu size={12} />
-             {config.activeEngine}
+             {config.activeEngine === TranslationEngine.MARIAN ? t.engineMarian : t.engineGemini}
            </div>
            
            <div className="h-4 w-px bg-slate-700 mx-2"></div>
@@ -76,7 +93,7 @@ const App: React.FC = () => {
             className="flex items-center gap-1 hover:text-white text-emerald-400 transition-colors"
            >
              <Terminal size={14} />
-             <span>Developer</span>
+             <span>{t.developer}</span>
            </button>
 
            <div className="flex items-center gap-2 text-white font-medium">
@@ -86,7 +103,7 @@ const App: React.FC = () => {
            <button 
              onClick={handleLogout}
              className="text-slate-400 hover:text-white transition-colors"
-             title="Logout"
+             title={t.logout}
            >
              <LogOut size={16} />
            </button>
@@ -96,12 +113,12 @@ const App: React.FC = () => {
       {/* Main Workspace */}
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 h-full relative">
-            <Translator config={config} setConfig={setConfig} />
+            <Translator config={config} setConfig={setConfig} uiLang={uiLang} />
         </div>
       </main>
 
       {/* Chatbot Overlay */}
-      <Chatbot />
+      <Chatbot uiLang={uiLang} />
     </div>
   );
 };

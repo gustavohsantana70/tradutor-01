@@ -1,3 +1,4 @@
+
 export enum TranslationStyle {
   LEGAL = 'Jurídico',
   FORMAL = 'Formal corporativo',
@@ -39,7 +40,13 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'zh-CN', name: 'Chinese (Simplified)' },
   { code: 'ja-JP', name: 'Japanese' },
   { code: 'ru-RU', name: 'Russian' },
-  { code: 'ar-SA', name: 'Arabic' }
+  { code: 'ar-SA', name: 'Arabic' },
+  { code: 'ko-KR', name: 'Korean' },
+  { code: 'nl-NL', name: 'Dutch' },
+  { code: 'tr-TR', name: 'Turkish' },
+  { code: 'pl-PL', name: 'Polish' },
+  { code: 'sv-SE', name: 'Swedish' },
+  { code: 'hi-IN', name: 'Hindi' }
 ];
 
 export interface GlossaryTerm {
@@ -110,3 +117,5 @@ export interface ApiLog {
   status: number;
   latency: string;
 }
+
+export type UILanguage = 'pt' | 'en';

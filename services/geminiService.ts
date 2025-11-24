@@ -113,13 +113,11 @@ Para termos não listados, use o vocabulário padrão da área de ${domain}.
 // Router Logic to determine engine
 export const determineEngine = (config: TranslationConfig): TranslationEngine => {
   // ROUTING LOGIC:
-  // IF style is LEGAL AND domain is strict (Contracts, Penal) -> Use MarianMT (Rigid)
-  // ELSE -> Use Gemini (Contextual/General)
+  // If style is 'Jurídico' (Legal), strictly use MarianMT for rigid formatting and fixed glossary.
+  // All other styles use Gemini (Contextual/Neural).
   
   if (config.style === TranslationStyle.LEGAL) {
-    if (config.legalDomain === LegalDomain.CONTRACTS || config.legalDomain === LegalDomain.PENAL) {
       return TranslationEngine.MARIAN;
-    }
   }
   
   return TranslationEngine.GEMINI;

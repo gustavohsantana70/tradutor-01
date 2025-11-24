@@ -1,11 +1,16 @@
+
 import React, { useCallback, useState } from 'react';
 import { Upload, FileText, Loader2, CheckCircle, FileType } from 'lucide-react';
+import { UILanguage } from '../types';
+import { LABELS } from '../services/localizationService';
 
 interface FileUploaderProps {
   onFileLoaded: (content: string) => void;
+  uiLang: UILanguage;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onFileLoaded }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ onFileLoaded, uiLang }) => {
+  const t = LABELS[uiLang];
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -19,8 +24,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileLoaded }) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        // In a real app, here we would parse PDF/DOCX binary.
-        // For this demo, we assume text-based content or pretend extraction happened.
         onFileLoaded(text);
         setIsProcessing(false);
       };
@@ -76,13 +79,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileLoaded }) => {
         {isProcessing ? (
           <div className="flex flex-col items-center animate-pulse">
             <Loader2 className="animate-spin text-indigo-600 mb-2" size={32} />
-            <span className="text-sm font-medium text-gray-600">Extracting content from {fileName}...</span>
+            <span className="text-sm font-medium text-gray-600">{t.extracting} {fileName}...</span>
           </div>
         ) : fileName && !isDragging ? (
           <div className="flex flex-col items-center">
             <CheckCircle className="text-green-500 mb-2" size={32} />
-            <span className="text-sm font-medium text-gray-800">{fileName} loaded</span>
-            <span className="text-xs text-indigo-600 mt-1 hover:underline">Upload another file</span>
+            <span className="text-sm font-medium text-gray-800">{fileName} {t.loaded}</span>
+            <span className="text-xs text-indigo-600 mt-1 hover:underline">{t.uploadAnother}</span>
           </div>
         ) : (
           <div className="flex flex-col items-center">
@@ -93,10 +96,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileLoaded }) => {
               <Upload size={20} />
             </div>
             <h3 className="text-sm font-semibold text-gray-700">
-              {isDragging ? 'Drop petition here' : 'Upload Petition or Contract'}
+              {isDragging ? t.uploadDrop : t.uploadBtn}
             </h3>
             <p className="text-xs text-gray-400 mt-1">
-              Supports XML, TXT, JSON. (PDF/DOCX simulated)
+              {t.uploadFormats}
             </p>
           </div>
         )}
