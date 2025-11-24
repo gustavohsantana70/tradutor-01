@@ -172,14 +172,26 @@ ${text}
   }
 };
 
-export const analyzeText = async (text: string, analysisType: 'summary' | 'risk' | 'format'): Promise<string> => {
+export const analyzeText = async (text: string, analysisType: 'summary' | 'risk' | 'format', lang: 'pt' | 'en' = 'en'): Promise<string> => {
   let instruction = "";
-  if (analysisType === 'summary') {
-    instruction = "Summarize the following legal text concisely for a lawyer.";
-  } else if (analysisType === 'risk') {
-    instruction = "Analyze the following text for potential legal risks, ambiguities, or unfavorable clauses.";
-  } else if (analysisType === 'format') {
-    instruction = "Check the following text for formatting inconsistencies or missing tags based on a standard XML doc structure.";
+
+  if (lang === 'pt') {
+    if (analysisType === 'summary') {
+      instruction = "Resuma o texto jurídico a seguir de forma concisa para um advogado. Responda em Português do Brasil.";
+    } else if (analysisType === 'risk') {
+      instruction = "Analise o texto a seguir em busca de riscos jurídicos potenciais, ambiguidades, cláusulas leoninas ou desfavoráveis. Forneça uma lista estruturada dos riscos identificados. Responda em Português do Brasil.";
+    } else if (analysisType === 'format') {
+      instruction = "Verifique o texto a seguir quanto a inconsistências de formatação ou tags XML ausentes com base na estrutura do documento. Responda em Português.";
+    }
+  } else {
+    // English defaults
+    if (analysisType === 'summary') {
+      instruction = "Summarize the following legal text concisely for a lawyer.";
+    } else if (analysisType === 'risk') {
+      instruction = "Analyze the following text for potential legal risks, ambiguities, or unfavorable clauses.";
+    } else if (analysisType === 'format') {
+      instruction = "Check the following text for formatting inconsistencies or missing tags based on a standard XML doc structure.";
+    }
   }
 
   try {

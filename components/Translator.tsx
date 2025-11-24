@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, GlossaryTerm, ComplianceReport, TranslationEngine, SUPPORTED_LANGUAGES, UILanguage } from '../types';
 import { translateDocument, analyzeText, improveText, auditTranslation, determineEngine } from '../services/geminiService';
@@ -64,7 +63,7 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig, uiLang }) =>
   const handleAnalyze = async (type: 'summary' | 'risk' | 'format') => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    const result = await analyzeText(sourceText, type);
+    const result = await analyzeText(sourceText, type, uiLang);
     setAnalysisResult({ type, content: result });
     setIsAnalyzing(false);
   };
