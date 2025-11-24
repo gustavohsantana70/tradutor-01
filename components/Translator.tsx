@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, GlossaryTerm, ComplianceReport } from '../types';
-import { translateDocument, analyzeText, improveText, auditTranslation } from '../services/geminiService';
-import { ArrowRight, FileText, Zap, AlertTriangle, CheckCircle, Copy, Loader2, Play, Sparkles, Book, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, GlossaryTerm, ComplianceReport, TranslationEngine, SUPPORTED_LANGUAGES } from '../types';
+import { translateDocument, analyzeText, improveText, auditTranslation, determineEngine } from '../services/geminiService';
+import { ArrowRight, FileText, Zap, AlertTriangle, CheckCircle, Copy, Loader2, Play, Sparkles, Book, ShieldCheck, Eye, Cpu } from 'lucide-react';
 import GlossaryManager from './GlossaryManager';
 import CompliancePanel from './CompliancePanel';
+import ReviewPanel from './ReviewPanel';
 import FileUploader from './FileUploader';
 
 interface TranslatorProps {
@@ -20,7 +21,14 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
 <FOOTNOTE id="1">Vide cláusula 3.2.</FOOTNOTE>
 <P>Conforme disposto no <XREF target="§3">parágrafo terceiro</XREF>, o prazo é de 12 meses.</P>
 </DOC>`);
-  const [targetText, setTargetText] = useState<string>('');
+  const [targetText, setTargetText] = useState<string>(`<DOC lang_src="pt-BR" lang_tgt="en-US" jurisdiction_tgt="US" style="jurídico">
+<H1>SERVICE AGREEMENT</H1>
+<P style="BodyText">The parties identified below...</P>
+<TAB[r1c1]>Subject Matter</TAB>
+<TAB[r1c2]>Provision of services...</TAB>
+<FOOTNOTE id="1">See clause 3.2.</FOOTNOTE>
+<P>As provided in <XREF target="§3">paragraph three</XREF>, the term is 12 months.</P>
+</DOC>`);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPolishing, setIsPolishing] = useState(false);
@@ -28,7 +36,16 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
   
   const [analysisResult, setAnalysisResult] = useState<{ type: string, content: string } | null>(null);
   const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(true);
   const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null);
+
+  // Auto-update engine based on selection
+  useEffect(() => {
+    const engine = determineEngine(config);
+    if (engine !== config.activeEngine) {
+      setConfig(prev => ({ ...prev, activeEngine: engine }));
+    }
+  }, [config.legalDomain, config.style, config.activeEngine, setConfig]);
 
   const handleTranslate = async () => {
     setIsTranslating(true);
@@ -84,6 +101,15 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
         setCustomTerms={setCustomTerms}
       />
 
+      {isReviewOpen && (
+        <ReviewPanel 
+          sourceText={sourceText} 
+          targetText={targetText} 
+          config={config} 
+          onClose={() => setIsReviewOpen(false)} 
+        />
+      )}
+
       {complianceReport && (
         <CompliancePanel 
           report={complianceReport} 
@@ -94,22 +120,47 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
       {/* Toolbar */}
       <div className="bg-white border-b border-gray-200 p-4 flex flex-wrap gap-4 items-center justify-between shadow-sm z-10">
         <div className="flex gap-4 items-center flex-wrap">
+          
+          {/* Source Language */}
           <div className="flex flex-col">
-             <label className="text-xs text-gray-500 font-semibold uppercase">AI Model</label>
-             <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white w-32 md:w-48"
-              value={config.model}
-              onChange={(e) => setConfig({ ...config, model: e.target.value as AIModel })}
+            <label className="text-xs text-gray-500 font-semibold uppercase">Source</label>
+            <select
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white w-36"
+              value={config.sourceLang}
+              onChange={(e) => setConfig({ ...config, sourceLang: e.target.value })}
             >
-              <option value={AIModel.GEMINI_3_PRO}>Gemini 3 Pro (High Quality)</option>
-              <option value={AIModel.GEMINI_2_5_FLASH}>Gemini 2.5 Flash (Fast)</option>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              ))}
             </select>
           </div>
 
           <div className="flex flex-col">
+             <div className="h-full flex items-end pb-1 text-gray-400">
+               <ArrowRight size={16} />
+             </div>
+          </div>
+
+          {/* Target Language */}
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 font-semibold uppercase">Target</label>
+            <select
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white w-36"
+              value={config.targetLang}
+              onChange={(e) => setConfig({ ...config, targetLang: e.target.value })}
+            >
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="h-8 w-px bg-gray-200 mx-2 hidden sm:block"></div>
+
+          <div className="flex flex-col">
              <label className="text-xs text-gray-500 font-semibold uppercase">Legal Domain</label>
              <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white w-36"
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[240px]"
               value={config.legalDomain}
               onChange={(e) => setConfig({ ...config, legalDomain: e.target.value as LegalDomain })}
             >
@@ -122,7 +173,7 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
           <div className="flex flex-col">
             <label className="text-xs text-gray-500 font-semibold uppercase">Style</label>
             <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white min-w-[180px]"
               value={config.style}
               onChange={(e) => setConfig({ ...config, style: e.target.value as TranslationStyle })}
             >
@@ -133,13 +184,15 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
           </div>
 
           <div className="flex flex-col">
-             <label className="text-xs text-gray-500 font-semibold uppercase">Target</label>
-             <input
-              type="text"
-              className="border border-gray-300 rounded px-2 py-1 text-sm w-16 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={config.targetLang}
-              onChange={(e) => setConfig({ ...config, targetLang: e.target.value })}
-            />
+             <label className="text-xs text-gray-500 font-semibold uppercase">Engine (Auto)</label>
+             <div className={`flex items-center gap-2 px-3 py-1 rounded border text-sm font-medium ${
+               config.activeEngine === TranslationEngine.MARIAN 
+               ? 'bg-purple-50 border-purple-200 text-purple-700' 
+               : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+             }`}>
+               <Cpu size={14} />
+               <span>{config.activeEngine === TranslationEngine.MARIAN ? 'MarianMT (Rigid)' : 'Gemini Neural'}</span>
+             </div>
           </div>
         </div>
 
@@ -173,7 +226,9 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
             <button
                 onClick={handleTranslate}
                 disabled={isTranslating}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-1.5 rounded-md hover:bg-indigo-700 transition-colors font-medium shadow-sm disabled:opacity-50 ml-2"
+                className={`flex items-center gap-2 text-white px-4 py-1.5 rounded-md transition-colors font-medium shadow-sm disabled:opacity-50 ml-2 ${
+                  config.activeEngine === TranslationEngine.MARIAN ? 'bg-purple-600 hover:bg-purple-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
             >
                 {isTranslating ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} fill="currentColor" />}
                 Translate
@@ -222,12 +277,22 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
                 {targetText && (
                   <>
                      <button 
+                        onClick={() => setIsReviewOpen(true)}
+                        className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors mr-2"
+                        title="Review Original, Translation and Glossary"
+                      >
+                         <Eye size={12} />
+                         Review
+                     </button>
+                     <div className="h-4 w-px bg-gray-300 mx-1"></div>
+                     <button 
                         onClick={handleAudit} 
                         disabled={isAuditing}
                         className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium disabled:opacity-50 transition-colors mr-2"
+                        title="Audit Compliance"
                       >
                          {isAuditing ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
-                         Verify Compliance
+                         Audit
                      </button>
                      <div className="h-4 w-px bg-gray-300 mx-1"></div>
                      <button onClick={() => copyToClipboard(targetText)} className="text-gray-400 hover:text-indigo-600 transition-colors" title="Copy">
@@ -247,8 +312,8 @@ const Translator: React.FC<TranslatorProps> = ({ config, setConfig }) => {
               {isTranslating && (
                   <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center">
                       <div className="bg-white p-4 rounded-lg shadow-xl border border-gray-100 flex flex-col items-center">
-                          <Loader2 className="animate-spin text-indigo-600 mb-2" size={32} />
-                          <span className="text-sm font-medium text-gray-600">Processing with {config.model}...</span>
+                          <Loader2 className={`animate-spin mb-2 ${config.activeEngine === TranslationEngine.MARIAN ? 'text-purple-600' : 'text-indigo-600'}`} size={32} />
+                          <span className="text-sm font-medium text-gray-600">Processing with {config.activeEngine}...</span>
                           <span className="text-xs text-gray-400 mt-1">Applying {config.legalDomain} glossary</span>
                       </div>
                   </div>

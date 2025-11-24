@@ -17,12 +17,30 @@ export enum AIModel {
   GEMINI_2_5_FLASH = 'gemini-2.5-flash'
 }
 
+export enum TranslationEngine {
+  GEMINI = 'Gemini Neural (Contextual)',
+  MARIAN = 'MarianMT (Rigid/Strict)'
+}
+
 export enum LegalDomain {
   GENERAL = 'General/Civil',
   CONTRACTS = 'Contracts/Corporate',
   PENAL = 'Criminal Law',
   TAX = 'Tax/Fiscal'
 }
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'pt-BR', name: 'Portuguese (BR)' },
+  { code: 'en-US', name: 'English (US)' },
+  { code: 'es-ES', name: 'Spanish (ES)' },
+  { code: 'fr-FR', name: 'French (FR)' },
+  { code: 'de-DE', name: 'German (DE)' },
+  { code: 'it-IT', name: 'Italian (IT)' },
+  { code: 'zh-CN', name: 'Chinese (Simplified)' },
+  { code: 'ja-JP', name: 'Japanese' },
+  { code: 'ru-RU', name: 'Russian' },
+  { code: 'ar-SA', name: 'Arabic' }
+];
 
 export interface GlossaryTerm {
   id: string;
@@ -40,6 +58,7 @@ export interface TranslationConfig {
   dateStyle: DateStyle;
   model: AIModel;
   legalDomain: LegalDomain;
+  activeEngine: TranslationEngine;
   customTerms: GlossaryTerm[];
 }
 

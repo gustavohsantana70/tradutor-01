@@ -1,10 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { TranslationConfig, TranslationStyle, LegalDomain, GlossaryTerm, ComplianceReport } from "../types";
+import { TranslationConfig, TranslationStyle, LegalDomain, GlossaryTerm, ComplianceReport, TranslationEngine } from "../types";
+import { translateWithMarianMT } from "./huggingFaceService";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // System Glossaries (Pre-defined TM)
-const SYSTEM_GLOSSARIES: Record<LegalDomain, GlossaryTerm[]> = {
+export const SYSTEM_GLOSSARIES: Record<LegalDomain, GlossaryTerm[]> = {
   [LegalDomain.GENERAL]: [],
   [LegalDomain.CONTRACTS]: [
     { id: 'c1', source: 'Rescisão', target: 'Termination', domain: LegalDomain.CONTRACTS },
@@ -109,7 +110,30 @@ Para termos não listados, use o vocabulário padrão da área de ${domain}.
 `;
 };
 
+// Router Logic to determine engine
+export const determineEngine = (config: TranslationConfig): TranslationEngine => {
+  // ROUTING LOGIC:
+  // IF style is LEGAL AND domain is strict (Contracts, Penal) -> Use MarianMT (Rigid)
+  // ELSE -> Use Gemini (Contextual/General)
+  
+  if (config.style === TranslationStyle.LEGAL) {
+    if (config.legalDomain === LegalDomain.CONTRACTS || config.legalDomain === LegalDomain.PENAL) {
+      return TranslationEngine.MARIAN;
+    }
+  }
+  
+  return TranslationEngine.GEMINI;
+};
+
 export const translateDocument = async (text: string, config: TranslationConfig): Promise<string> => {
+  const engine = determineEngine(config);
+  
+  // If Engine is MarianMT, use the specialized service
+  if (engine === TranslationEngine.MARIAN) {
+    return translateWithMarianMT(text, config);
+  }
+
+  // Otherwise, use Gemini Orchestrator
   const styleInstruction = getStyleInstruction(config.style);
   const glossaryInstruction = getGlossaryInstruction(config.legalDomain, config.customTerms);
   

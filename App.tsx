@@ -3,7 +3,7 @@ import Translator from './components/Translator';
 import Chatbot from './components/Chatbot';
 import Login from './components/Login';
 import DeveloperConsole from './components/DeveloperConsole';
-import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, AuthUser } from './types';
+import { TranslationConfig, TranslationStyle, DateStyle, AIModel, LegalDomain, AuthUser, TranslationEngine } from './types';
 import { getCurrentUser, logout } from './services/authService';
 import { BookOpen, ShieldCheck, Globe, Cpu, LogOut, User, Terminal } from 'lucide-react';
 
@@ -19,6 +19,7 @@ const App: React.FC = () => {
     dateStyle: DateStyle.JURISDICTION,
     model: AIModel.GEMINI_3_PRO,
     legalDomain: LegalDomain.CONTRACTS,
+    activeEngine: TranslationEngine.GEMINI,
     customTerms: []
   });
 
@@ -65,7 +66,7 @@ const App: React.FC = () => {
            </div>
            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-xs font-mono text-indigo-300 border border-slate-700">
              <Cpu size={12} />
-             {config.model}
+             {config.activeEngine}
            </div>
            
            <div className="h-4 w-px bg-slate-700 mx-2"></div>
